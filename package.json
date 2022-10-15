@@ -7,10 +7,11 @@
   "license": "UNLICENSED",
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "nest build",
+    "build": "npm run docs && nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "npm run docs && nest start",
     "start:watch": "nest start --watch",
+    "start:production": "node .\\dist\\main\n",
     "lint": "eslint \"{src,apps,libs,test, error}/**/*.ts\" --fix",
     "test": "jest --detectOpenHandles",
     "test:watch": "jest --watch",
