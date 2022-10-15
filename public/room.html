@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+
+<script src="https://cdn.socket.io/3.1.3/socket.io.min.js" integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh" crossorigin="anonymous"></script>
+<body>
+
+<div id="room">
+
+    <h3 id="username"></h3>
+
+    <h3 id="room-size"></h3>
+
+    <h3 id="game-duration"></h3>
+
+    <h3>Participants</h3>
+    <ul id="participants">
+
+    </ul>
+
+
+    <button id="ready">Ready</button>
+</div>
+
+<div id="game" style="visibility:hidden">
+    <h3>Word to guess:</h3>
+    <h3 id="word-to-guess" style="background: #1E1E1E; color:white; white-space: pre-wrap"></h3>
+
+    <form id="guess-form">
+        <label for="guess">
+            Your guess:
+        </label>
+        <input type="text" id="guess"><br><br>
+    </form>
+    <button id="guess-button">Guess</button>
+
+    <img id="image-1" alt="not fetched" src="">
+    <img id="image-2" alt="not fetched" src="">
+    <img id="image-3" alt="not fetched" src="">
+    <img id="image-4" alt="not fetched" src="">
+    <img id="image-5" alt="not fetched" src="">
+</div>
+
+
+<script>
+    const url = new URL(window.location.href);
+    const query =  new URLSearchParams(url.search);
+    const key = query.get('key');
+    let myId;
+    let myUsername = query.get('username');
+    let socketQuery = '?key='+key;
+    if(myUsername)
+        socketQuery += '&username='+myUsername;
+
+    let guessed;
+    let guessCount;
+
+    const socket = io('/rooms'+socketQuery);
+
+    socket.on('game.data.received', ({id, username, maxPlayers, gameDurationSeconds,
+                                     participants}) => {
+        myId = id;
+        myUsername = username
+        document.getElementById("username").innerHTML = 'Username: ' + myUsername;
+        document.getElementById("room-size").innerHTML = 'Room size: ' + maxPlayers;
+        document.getElementById("game-duration").innerHTML = 'Game duration: ' + gameDurationSeconds+'s';
+
+        participants['readyUsernames'].forEach(name => setParticipant(name, true));
+        participants['unreadyUsernames'].forEach(name => setParticipant(name, false));
+
+        setReadyCallback()
+    })
+
+    function setReadyCallback() {
+        document.getElementById("ready")
+        .onclick = () => {
+            fetch(`/rooms/ready?id=${myId}&key=${key}`, {
+                method: 'PUT'
+            })
+        }
+    }
+
+    function getParticipants() {
+        return document.getElementById("participants");
+    }
+
+
+    function setParticipant(username, isReady=false) {
+        const list = getParticipants()
+        let li = document.createElement('li');
+        li.appendChild(document.createTextNode(username));
+        li.style.color = isReady ? 'green' : 'red';
+        li.setAttribute('id', username);
+        list.appendChild(li);
+    }
+
+    function removeParticipant(username) {
+        document.getElementById(username).remove();
+    }
+
+    function setAllAsUnready() {
+        document.getElementById("participants")
+            .querySelectorAll("li").forEach(p => p.style.color = 'red');
+    }
+
+    socket.on('participant.joined', ({username}) => {
+        if(username === myUsername)
+            return;
+        setParticipant(username);
+    })
+    socket.on('participant.left', ({username}) => {
+        removeParticipant(username);
+    })
+    socket.on('participant.ready', ({username}) => {
+        removeParticipant(username);
+        setParticipant(username, true);
+    })
+
+    function clearRankings() {
+        document.getElementById("participants")
+            .querySelectorAll("li").forEach(p => p.innerHTML = p.id);
+    }
+
+    function formatAndSetHiddenWord(hiddenWord) {
+        setHiddenWord(hiddenWord.map(char => !char?'_':char).join(' '));
+    }
+
+    socket.on('game.started', ({hiddenWord, imageUrls}) => {
+        alert('GAME STARTED!')
+        console.log(hiddenWord)
+        guessed = false;
+        guessCount = 0;
+        for(let i = 0; i < imageUrls.length; i++)
+            document.getElementById(`image-${i+1}`).src = imageUrls[i];
+        document.getElementById("game").style.visibility = "visible"
+        formatAndSetHiddenWord(hiddenWord)
+        clearRankings();
+        document.getElementById('guess-button')
+        .onclick = () => {
+            if(guessed)
+                return;
+            const guess = document.getElementById('guess').value;
+            if(!guess)
+                return;
+
+            document.getElementById('guess').value = '';
+
+            fetch(`/rooms/guess?key=${key}&id=${myId}&guess=${guess}`,
+                {method: 'POST'})
+            .then(res => res.json()).then(({isCorrect}) => {
+                if(isCorrect) {
+                    guessed = true;
+                    alert('You guessed the word!')
+                    setHiddenWord(guess);
+                }
+            }).catch()
+        }
+    })
+
+    function setHiddenWord(word) {
+        document.getElementById('word-to-guess')
+            .innerHTML = word;
+    }
+
+    socket.on('game.ended', data => {
+        console.log(data)
+        setAllAsUnready();
+        document.getElementById('game')
+        .style.visibility = 'hidden';
+    })
+    socket.on('guess.submitted', data => {
+        console.log(data)
+        //TODO show chat
+    })
+    socket.on('participant.guessed', ({username}) => {
+
+        document.getElementById(username)
+        .innerHTML += ' #' + ++guessCount;
+    })
+
+    socket.on('letter.revealed', ({hiddenWord}) => {
+        if(guessed)
+            return;
+        formatAndSetHiddenWord(hiddenWord);
+    })
+
+</script>
+</body>
+</html>

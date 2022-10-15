@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { GameRoom, RoomKey } from '../helpers/rooms.game-room';
+import { GameRoom, GameRoomOptions, RoomKey } from '../helpers/rooms.game-room';
 import { RoomDestroyer } from '../helpers/rooms.interfaces';
 import { CustomException } from '../../exceptions/exceptions.custom-exception';
 import { CustomExceptionType } from '../../exceptions/exceptions.types';
 import { WebsocketUser } from '../helpers/rooms.user';
 import { LoggingService } from '../../logging/logging.service';
+import { GuessResultDto, RoomCredentialsDto } from '../helpers/rooms.dto';
 
 @Injectable()
 export class RoomsService {
@@ -15,17 +16,23 @@ export class RoomsService {
 
   constructor(private readonly loggingService: LoggingService) {}
 
-  createRoom(): RoomKey {
-    return this.getNewRoomKey();
+  createRoom(gameRoomOptions: GameRoomOptions): RoomCredentialsDto {
+    return this.getNewRoomCredentials(gameRoomOptions);
   }
 
-  private getNewRoomKey(): RoomKey {
+  private getNewRoomCredentials(
+    gameRoomOptions: GameRoomOptions,
+  ): RoomCredentialsDto {
     const newRoom: GameRoom = new GameRoom(
       this.roomDestroyer.bind(this),
       this.loggingService,
+      gameRoomOptions,
     );
     this.activeRoomsRecord[newRoom.key.toString()] = newRoom;
-    return newRoom.key;
+    return {
+      key: newRoom.key,
+      willDeleteAfterSeconds: newRoom.deactivationTimeSeconds,
+    };
   }
 
   private getRoom(key: RoomKey): GameRoom | undefined {
@@ -34,6 +41,9 @@ export class RoomsService {
 
   private deleteRoom(key: RoomKey): void {
     delete this.activeRoomsRecord[key.toString()];
+    this.loggingService.info('Inactive room deleted', {
+      key: key,
+    });
   }
 
   joinRoom(user: WebsocketUser, key: RoomKey): void {
@@ -50,5 +60,14 @@ export class RoomsService {
     if (!room)
       throw new CustomException(CustomExceptionType.WRONG_KEY, { key: key });
     room.setReady(id);
+  }
+
+  submitGuess(id: string, key: string, guess: string): GuessResultDto {
+    const room: GameRoom = this.getRoom(key);
+    if (!room)
+      throw new CustomException(CustomExceptionType.WRONG_KEY, { key: key });
+    return {
+      isCorrect: room.guess(id, guess),
+    };
   }
 }

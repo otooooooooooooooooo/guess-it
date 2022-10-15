@@ -43,6 +43,20 @@ export class CustomExceptionFilter implements ExceptionFilter {
         message: 'Game had already started',
       },
     ],
+    [
+      CustomExceptionType.GAME_NOT_STARTED,
+      {
+        status: 435,
+        message: 'Game has not started yet',
+      },
+    ],
+    [
+      CustomExceptionType.ALREADY_GUESSED,
+      {
+        status: 436,
+        message: 'You have already guessed the word',
+      },
+    ],
   ]);
 
   catch(exception: CustomException, host: ArgumentsHost): any {

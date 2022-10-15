@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<div id="join-div">
+    <h1>
+        Join Room
+    </h1>
+<form id="join-form">
+    <label for="room-key">
+        Room key:
+    </label>
+    <input type="text" id="room-key"><br><br>
+    <label for="username">
+        Username:
+    </label>
+    <input type="text" id="username"><br><br>
+</form>
+
+<button id="join-button">Join</button>
+</div>
+
+<div id="create-div">
+    <h1>
+        Create Room
+    </h1>
+     <form id="create-form">
+         <label for="max-players">
+             Max Players:
+         </label>
+         <input type="number" id="max-players" min="2" max="30"><br><br>
+         <label for="game-duration">
+             Game Duration (seconds):
+         </label>
+         <input type="number" id="game-duration" min="15" max="180"><br><br>
+         <label for="disable-hints">
+             Disable Hints:
+         </label>
+         <input type="checkbox" id="disable-hints"><br><br>
+     </form>
+
+    <button id="create-button">Create</button>
+
+</div>
+<script>
+    document.getElementById("join-button")
+    .onclick = () => {
+        const key = document.getElementById("room-key").value;
+        if(!key) {
+            alert('Please provide room key');
+            return;
+        }
+        const username = document.getElementById("username").value;
+        window.location.href = `room.html?key=${key}&username=${username}`
+    }
+
+    document.getElementById("create-button")
+    .onclick = () => {
+        const maxPlayers = document.getElementById("max-players").value;
+        const gameDurationSeconds = document.getElementById("game-duration").value;
+        const disableHints = document.getElementById("disable-hints").checked;
+        let query = '?';
+        if(maxPlayers)
+            query += `maxPlayers=${maxPlayers}&`;
+        if(gameDurationSeconds)
+            query += `gameDurationSeconds=${gameDurationSeconds}&`
+        query += `disableHints=${disableHints}`;
+
+        fetch('/rooms' + query,
+            {
+            method: 'POST',
+        }).then(res => res.json()).then(
+            ({key, willDeleteAfterSeconds}) => {
+                alert(`New room credential entered. \nWill be deactivated in ${willDeleteAfterSeconds} seconds`)
+                document.getElementById('room-key').value = key;
+            }
+        ).catch(alert)
+    }
+</script>
+</body>
+</html>

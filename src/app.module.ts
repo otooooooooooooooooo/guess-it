@@ -10,6 +10,10 @@ import { LoggingMiddleware } from './logging/logging.middleware';
       rootPath: join(process.cwd(), 'typedoc'),
       serveRoot: '/typedoc',
     }),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'public'),
+      serveRoot: '/public',
+    }),
     RoomsModule,
     LoggingModule,
   ],

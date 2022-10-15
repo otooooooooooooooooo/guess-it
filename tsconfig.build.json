@@ -2,5 +2,7 @@
   "extends": "./tsconfig.json",
   "exclude": [
     "node_modules",
-    "test", "dist", "**/*spec.ts"]
+    "test", "dist", "**/*spec.ts"],
+  "resolveJsonModule": true,
+  "esModuleInterop": true
 }

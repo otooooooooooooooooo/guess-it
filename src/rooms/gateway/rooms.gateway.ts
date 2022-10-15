@@ -1,16 +1,25 @@
 import { OnGatewayConnection, WebSocketGateway } from '@nestjs/websockets';
 import { config } from '../../config/config';
 import { RoomsService } from '../service/rooms.service';
-import { ClientIdPayload, RoomEvent } from '../helpers/rooms.events';
 import { WebsocketUser } from '../helpers/rooms.user';
+import { LoggingService } from '../../logging/logging.service';
 
 @WebSocketGateway({ cors: config.CORS, namespace: 'rooms' })
 export class RoomsGateway implements OnGatewayConnection {
-  constructor(private readonly roomsService: RoomsService) {}
+  constructor(
+    private readonly roomsService: RoomsService,
+    private readonly loggingService: LoggingService,
+  ) {}
 
   handleConnection(client: any, ...args: any[]): any {
     const { key, username }: { key: string; username: string } =
       client.handshake.query;
+
+    this.loggingService.info('Client connected', {
+      id: client.id,
+      key: key,
+      username: username,
+    });
 
     if (!key) {
       client.disconnect('Room key not provided.');
@@ -18,8 +27,6 @@ export class RoomsGateway implements OnGatewayConnection {
     }
 
     const id: string = client.id;
-
-    client.emit(RoomEvent.CLIENT_ID, { id: id } as ClientIdPayload);
 
     this.roomsService.joinRoom(new WebsocketUser(id, username, client), key);
   }

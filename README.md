@@ -22,6 +22,8 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
+##Words copied from - https://github.com/engichang1467/word-pictionary-list
+
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
