@@ -4,4 +4,5 @@ export enum CustomExceptionType {
   WRONG_ID = 'Wrong client id',
   GAME_NOT_STARTED = 'Game not started',
   ALREADY_GUESSED = 'Already guessed',
+  NOT_CUSTOM_MODE = 'Not custom mode',
 }

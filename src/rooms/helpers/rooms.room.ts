@@ -12,6 +12,7 @@ import {
   ParticipantLeftPayload,
   ParticipantReadyPayload,
   RoomEvent,
+  WordAddedPayload,
 } from './rooms.events';
 import { CustomException } from '../../exceptions/exceptions.custom-exception';
 import { CustomExceptionType } from '../../exceptions/exceptions.types';
@@ -28,6 +29,7 @@ type RoomSettings = {
   maxPlayers: number;
   gameDurationSeconds: number;
   disableHints: boolean;
+  customWords: boolean;
 };
 
 export const defaultSettings: RoomSettings = {
@@ -35,6 +37,7 @@ export const defaultSettings: RoomSettings = {
   gameDurationSeconds: 60,
   maxPlayers: 5,
   disableHints: false,
+  customWords: false,
 };
 
 export type RoomOptions = Partial<RoomSettings>;
@@ -74,6 +77,7 @@ export class Room {
   private gameEndTimeout: NodeJS.Timeout;
   private hintTimeout: NodeJS.Timeout;
   private readonly deactivationTimeout: NodeJS.Timeout;
+  private readonly customWords: string[] = [];
 
   public get deactivationTimeSeconds(): number {
     return this.settings.deleteAfterInactiveSeconds;
@@ -176,6 +180,7 @@ export class Room {
       maxPlayers: this.settings.maxPlayers,
       gameDurationSeconds: this.settings.gameDurationSeconds,
       hintsEnabled: !this.settings.disableHints,
+      customWords: this.settings.customWords ? this.customWords.length : false,
       participants: {
         readyUsernames: this.participants
           .filter((p) => p.status === RoomParticipantStatus.READY)
@@ -216,8 +221,12 @@ export class Room {
     this.startGameIfAllReady();
   }
 
+  private wordListReady(): boolean {
+    return !this.settings.customWords || this.customWords.length !== 0;
+  }
+
   private startGameIfAllReady(): void {
-    if (this.allReady()) this.startGame().then();
+    if (this.allReady() && this.wordListReady()) this.startGame().then();
   }
 
   private findParticipantById(id: string): RoomParticipant | undefined {
@@ -264,8 +273,11 @@ export class Room {
   }
 
   private setWordToGuess(): void {
+    console.log(this.customWords);
     const { word, hiddenWord }: { word: string; hiddenWord: HiddenWord } =
-      this.wordsService.getRandomWord();
+      this.wordsService.getRandomWord(
+        this.settings.customWords ? this.customWords : undefined,
+      );
     this.wordToGuess = word;
     this.hiddenWord = hiddenWord;
   }
@@ -338,5 +350,21 @@ export class Room {
   private deactivate(): void {
     this.loggingService.info('Deactivating room ', { key: this.key });
     this.roomDestroyer(this);
+  }
+
+  addCustomWord(id: string, word: string) {
+    const participant: RoomParticipant = this.findParticipantById(id);
+    if (!participant)
+      throw new CustomException(CustomExceptionType.WRONG_ID, { id: id });
+    if (!this.settings.customWords)
+      throw new CustomException(CustomExceptionType.NOT_CUSTOM_MODE, {
+        id: id,
+        key: this.key,
+      });
+    this.customWords.push(word);
+    this.emitToAll(RoomEvent.WORD_ADDED, {
+      wordCount: this.customWords.length,
+    } as WordAddedPayload);
+    this.startGameIfAllReady();
   }
 }

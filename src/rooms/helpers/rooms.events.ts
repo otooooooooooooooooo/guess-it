@@ -8,6 +8,7 @@ export enum RoomEvent {
   GUESS_SUBMITTED = 'guess.submitted',
   PARTICIPANT_GUESSED = 'participant.guessed',
   LETTER_REVEALED = 'letter.revealed',
+  WORD_ADDED = 'word.added',
 }
 
 export type GameDataReceivedPayload = {
@@ -16,6 +17,7 @@ export type GameDataReceivedPayload = {
   maxPlayers: number;
   gameDurationSeconds: number;
   hintsEnabled: boolean;
+  customWords: boolean | number;
   participants: {
     readyUsernames: string[];
     unreadyUsernames: string[];
@@ -57,4 +59,8 @@ export type ParticipantGuessedPayload = {
 
 export type LetterRevealedPayload = {
   hiddenWord: HiddenWord;
+};
+
+export type WordAddedPayload = {
+  wordCount: number;
 };

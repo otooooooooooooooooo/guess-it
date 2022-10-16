@@ -57,6 +57,13 @@ export class CustomExceptionFilter implements ExceptionFilter {
         message: 'You have already guessed the word',
       },
     ],
+    [
+      CustomExceptionType.NOT_CUSTOM_MODE,
+      {
+        status: 437,
+        message: 'Game mode is not custom words',
+      },
+    ],
   ]);
 
   catch(exception: CustomException, host: ArgumentsHost): any {

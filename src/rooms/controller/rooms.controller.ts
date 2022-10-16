@@ -2,6 +2,7 @@ import { Controller, Post, Put, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RoomsService } from '../service/rooms.service';
 import {
+  AddCustomWordParams,
   CreateRoomParams,
   GuessResultDto,
   RoomCredentialsDto,
@@ -26,6 +27,7 @@ export class RoomsController {
       maxPlayers: createRoomParams.maxPlayers,
       gameDurationSeconds: createRoomParams.gameDurationSeconds,
       disableHints: createRoomParams.disableHints,
+      customWords: createRoomParams.customWords,
     });
   }
 
@@ -54,6 +56,21 @@ export class RoomsController {
       submitGuessParams.id,
       submitGuessParams.key,
       submitGuessParams.guess,
+    );
+  }
+
+  @ApiOperation({
+    description: 'Add custom word to the room',
+  })
+  @ApiResponse(getSwaggerSummary(CustomExceptionType.WRONG_KEY))
+  @ApiResponse(getSwaggerSummary(CustomExceptionType.WRONG_ID))
+  @ApiResponse(getSwaggerSummary(CustomExceptionType.NOT_CUSTOM_MODE))
+  @Post('/word')
+  addCustomWord(@Query() addCustomWordParams: AddCustomWordParams): void {
+    this.roomsService.addCustomWord(
+      addCustomWordParams.id,
+      addCustomWordParams.key,
+      addCustomWordParams.word,
     );
   }
 }

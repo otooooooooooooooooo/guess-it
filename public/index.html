@@ -41,6 +41,10 @@
              Disable Hints:
          </label>
          <input type="checkbox" id="disable-hints"><br><br>
+         <label for="custom-words">
+             Use Custom words:
+         </label>
+         <input type="checkbox" id="custom-words"><br><br>
      </form>
 
     <button id="create-button">Create</button>
@@ -63,12 +67,16 @@
         const maxPlayers = document.getElementById("max-players").value;
         const gameDurationSeconds = document.getElementById("game-duration").value;
         const disableHints = document.getElementById("disable-hints").checked;
+        const customWords = document.getElementById("custom-words").checked;
         let query = '?';
         if(maxPlayers)
             query += `maxPlayers=${maxPlayers}&`;
         if(gameDurationSeconds)
             query += `gameDurationSeconds=${gameDurationSeconds}&`
-        query += `disableHints=${disableHints}`;
+        if(disableHints)
+            query += `disableHints=${disableHints}&`;
+        if(customWords)
+            query += `customWords=${customWords}`;
 
         fetch('/rooms' + query,
             {

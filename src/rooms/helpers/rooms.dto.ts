@@ -1,6 +1,14 @@
 //Events
 
-import { IsBoolean, IsNotEmpty, IsOptional, Max, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { defaultSettings, RoomKey } from './rooms.room';
 import { Transform, Type } from 'class-transformer';
@@ -31,9 +39,17 @@ export class CreateRoomParams {
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
   disableHints?: boolean | undefined;
+
+  @ApiPropertyOptional({
+    description: 'If passed true, custom words will be used',
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true')
+  customWords?: boolean | undefined;
 }
 
-export class SetReadyParams {
+export abstract class CredentialsBaseParams {
   @ApiProperty({
     description: 'Client id provided through socket',
   })
@@ -46,13 +62,26 @@ export class SetReadyParams {
   key: string;
 }
 
-export class SubmitGuessParams extends SetReadyParams {
+export class SetReadyParams extends CredentialsBaseParams {}
+
+export class SubmitGuessParams extends CredentialsBaseParams {
   @ApiProperty({
     description:
       'Your guess for hidden word. Whitespaces can be replaced with %20',
   })
   @IsNotEmpty()
   guess: string;
+}
+
+export class AddCustomWordParams extends CredentialsBaseParams {
+  @ApiProperty({
+    description:
+      'Custom word to add to list. length 2-50, only latin characters with hyphens or spaces allowed',
+  })
+  @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(50)
+  word: string;
 }
 
 export class RoomCredentialsDto {

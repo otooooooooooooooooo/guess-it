@@ -73,4 +73,11 @@ export class RoomsService {
       isCorrect: room.guess(id, guess),
     };
   }
+
+  addCustomWord(id: string, key: string, word: string): void {
+    const room: Room = this.getRoom(key);
+    if (!room)
+      throw new CustomException(CustomExceptionType.WRONG_KEY, { key: key });
+    room.addCustomWord(id, word);
+  }
 }

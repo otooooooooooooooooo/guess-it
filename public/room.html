@@ -18,6 +18,18 @@
 
     <h3 id="hints-enabled"></h3>
 
+    <div id="custom-word-div" style="visibility: hidden">
+        <h3 id="custom-word-count"></h3>
+        <form id="custom-word-form" onsubmit="return false">
+            <label for="custom-word">
+                New Custom Word:
+            </label>
+            <input type="text" id="custom-word"><br><br>
+        </form>
+        <button id="custom-word-button">Add</button>
+
+    </div>
+
     <h3>Participants</h3>
     <ul id="participants">
 
@@ -64,18 +76,42 @@
     let guessed;
     let guessCount;
     let gameInProgress = false;
+    let customWordsMode;
 
     const socket = io('/rooms'+socketQuery);
 
+    function setCustomWordsMode() {
+        customWordsMode = true;
+        document.getElementById('custom-word-div').style.visibility = "visible";
+        document.getElementById('custom-word-button').onclick = () => {
+            const word = document.getElementById('custom-word').value;
+            if(!word || word.length < 2)
+                return;
+            document.getElementById('custom-word').value = '';
+            fetch(`/rooms/word?key=${key}&id=${myId}&word=${word}`,
+                {method: 'POST'}).then();
+        }
+    }
+
+    function setCustomWordsCount(count) {
+        document.getElementById('custom-word-count').innerHTML = `Custom Word Count: ${count}`;
+    }
+
+
     socket.on('game.data.received', ({id, username, maxPlayers, gameDurationSeconds,
-        hintsEnabled,
-                                     participants}) => {
+        hintsEnabled, customWords, participants}) => {
+        if(customWords !== false) {
+            setCustomWordsCount(customWords);
+            setCustomWordsMode();
+        }
+
         myId = id;
         myUsername = username
         document.getElementById("username").innerHTML = 'Username: ' + myUsername;
         document.getElementById("room-size").innerHTML = 'Room size: ' + maxPlayers;
         document.getElementById("game-duration").innerHTML = 'Game duration: ' + gameDurationSeconds+'s';
         document.getElementById("hints-enabled").innerHTML = 'Hints ' + (hintsEnabled? 'enabled' : 'disabled');
+
 
         participants['readyUsernames'].forEach(name => setParticipant(name, true));
         participants['unreadyUsernames'].forEach(name => setParticipant(name, false));
@@ -200,12 +236,13 @@
         return document.getElementById(`last-guess-${num}`).innerHTML === '-'
     }
 
-    socket.on('game.ended', data => {
+    socket.on('game.ended', ({revealedWord}) => {
         gameInProgress = false;
-        console.log(data)
         setAllAsUnready();
+        setHiddenWord(revealedWord);
+        setTimeout(() =>
         document.getElementById('game')
-        .style.visibility = 'hidden';
+        .style.visibility = 'hidden', 3000);
     })
     socket.on('guess.submitted', ({username, guess}) => {
         const textToShow = `[${username}]: ${guess}`;
@@ -233,6 +270,10 @@
         if(guessed)
             return;
         formatAndSetHiddenWord(hiddenWord);
+    })
+
+    socket.on('word.added', ({wordCount}) => {
+        setCustomWordsCount(wordCount);
     })
 
 </script>

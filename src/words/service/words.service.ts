@@ -4,11 +4,17 @@ import { words } from '../helpers/words';
 
 @Injectable()
 export class WordsService {
-  private readonly shownCharacters: string[] = [' ', '-', '_', '&'];
+  private readonly shownCharacters: string[] = [' ', '-', '_', '&']; //TODO
 
-  getRandomWord(): { word: string; hiddenWord: HiddenWord } {
-    const word: string =
-      words[Math.floor(Math.random() * words.length)].toUpperCase();
+  getRandomWord(customList?: string[]): {
+    word: string;
+    hiddenWord: HiddenWord;
+  } {
+    const listToChooseFrom: string[] = customList || words;
+    const randomIndex: number = Math.floor(
+      Math.random() * listToChooseFrom.length,
+    );
+    const word: string = listToChooseFrom[randomIndex].toUpperCase();
 
     const hiddenWord: HiddenWord = word
       .split('')
