@@ -12,6 +12,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { defaultSettings, RoomKey } from './rooms.room';
 import { Transform, Type } from 'class-transformer';
+import {IsValidWord} from "./rooms.dto.validator";
 
 export class CreateRoomParams {
   @ApiPropertyOptional({
@@ -76,11 +77,12 @@ export class SubmitGuessParams extends CredentialsBaseParams {
 export class AddCustomWordParams extends CredentialsBaseParams {
   @ApiProperty({
     description:
-      'Custom word to add to list. length 2-50, only latin characters with hyphens or spaces allowed',
+      'Custom word to add to list. length 2-50, only alphanumeric characters, hyphens and spaces allowed',
   })
   @IsNotEmpty()
   @MinLength(2)
   @MaxLength(50)
+  @IsValidWord()
   word: string;
 }
 
