@@ -93,6 +93,7 @@ when application is running)
 
 See detailed events information (names and payload types) on /typedoc/modules/rooms_helpers_rooms_events.html
 when application is running and typedoc files have been generated
+in source code ./src/rooms/helpers/rooms.events.ts
 
 See sample client application on /public address
 when application is running.
