@@ -41,7 +41,7 @@ $ npm run start
 $ npm run start:watch
 
 # production mode
-$ npm run start:prod
+$ npm run build && npm run start:prod
 ```
 
 ## Test
