@@ -10,8 +10,10 @@ export class ImagesService {
    * @private
    */
   getImageUrls(keyword): Promise<string[]> {
-    //Documentation https://serpapi.com/images-results
-    //random query to avoid caching idk why
+    /**
+     * Documentation https://serpapi.com/images-results
+     * Random query to avoid caching idk why
+     */
     return axios
       .get(`https://serpapi.com/search?z=${Math.random()}`, {
         data: {
