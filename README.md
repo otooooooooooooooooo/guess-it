@@ -44,7 +44,7 @@ $ npm run start:watch
 $ npm run build && npm run start:prod
 ```
 
-## Test
+## Test (Unit tests are not set up)
 
 ```bash
 # unit tests
