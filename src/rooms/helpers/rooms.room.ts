@@ -317,7 +317,6 @@ export class Room {
   }
 
   private findParticipantById(id: string): RoomParticipant | undefined {
-    console.log(this.participants);
     return this.participants.find((p) => p.user.id === id) || undefined;
   }
 
@@ -364,7 +363,6 @@ export class Room {
   }
 
   private setWordToGuess(): void {
-    console.log(this.customWords);
     const { word, hiddenWord }: { word: string; hiddenWord: HiddenWord } =
       this.wordsService.getRandomWord(
         this.settings.customWords ? this.customWords : undefined,
@@ -452,7 +450,11 @@ export class Room {
         id: id,
         key: this.key,
       });
-    //TODO check duplicate words
+    if (this.wordsService.matchesWordList(word, this.customWords))
+      throw new CustomException(CustomExceptionType.DUPLICATE_WORD, {
+        word: word,
+        key: this.key,
+      });
     this.customWords.push(word);
     this.emitToAll(RoomEvent.WORD_ADDED, {
       wordCount: this.customWords.length,

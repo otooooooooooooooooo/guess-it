@@ -9,4 +9,5 @@ export enum CustomExceptionType {
   GAME_NOT_STARTED = 'Game not started',
   ALREADY_GUESSED = 'Already guessed',
   NOT_CUSTOM_MODE = 'Not custom mode',
+  DUPLICATE_WORD = 'Duplicate word',
 }

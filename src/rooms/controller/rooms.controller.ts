@@ -65,6 +65,7 @@ export class RoomsController {
   @ApiResponse(getSwaggerSummary(CustomExceptionType.WRONG_KEY))
   @ApiResponse(getSwaggerSummary(CustomExceptionType.WRONG_ID))
   @ApiResponse(getSwaggerSummary(CustomExceptionType.NOT_CUSTOM_MODE))
+  @ApiResponse(getSwaggerSummary(CustomExceptionType.DUPLICATE_WORD))
   @Post('/word')
   addCustomWord(@Query() addCustomWordParams: AddCustomWordParams): void {
     this.roomsService.addCustomWord(

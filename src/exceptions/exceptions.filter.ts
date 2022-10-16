@@ -64,6 +64,13 @@ export class CustomExceptionFilter implements ExceptionFilter {
         message: 'Game mode is not custom words',
       },
     ],
+    [
+      CustomExceptionType.DUPLICATE_WORD,
+      {
+        status: 438,
+        message: 'Custom word already exists',
+      },
+    ],
   ]);
 
   catch(exception: CustomException, host: ArgumentsHost): any {

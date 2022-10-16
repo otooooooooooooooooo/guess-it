@@ -9,7 +9,7 @@ import { BadRequestException } from '@nestjs/common';
 @ValidatorConstraint({ async: false })
 class CustomWordConstraint implements ValidatorConstraintInterface {
   validate(word: string, _: ValidationArguments): boolean {
-    const regexString: string = '^([a-zA-Z0-9]+)([a-zA-Z0-9] |-)*$';
+    const regexString = '^([a-zA-Z0-9]+)([a-zA-Z0-9] |-)*$';
     if (!new RegExp(regexString).test(word))
       throw new BadRequestException(`Word should match regex ${regexString}`);
     return true;
