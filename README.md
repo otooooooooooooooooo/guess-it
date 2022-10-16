@@ -22,6 +22,8 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
+Project author - &copy; [Otar Kalandadze](https://www.linkedin.com/in/otokalandadze/)
+
 ## Description
 Api of the guessing based game just for web backend portfolio
 
