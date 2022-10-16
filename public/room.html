@@ -31,13 +31,17 @@
     <h3>Word to guess:</h3>
     <h3 id="word-to-guess" style="background: #1E1E1E; color:white; white-space: pre-wrap"></h3>
 
-    <form id="guess-form">
+
+    <h3 id="last-guess-1"></h3>
+    <h3 id="last-guess-2"></h3>
+    <h3 id="last-guess-3"></h3>
+
+    <form id="guess-form" onsubmit="return false">
         <label for="guess">
             Your guess:
         </label>
         <input type="text" id="guess"><br><br>
     </form>
-    <button id="guess-button">Guess</button>
 
     <img id="image-1" alt="not fetched" src="">
     <img id="image-2" alt="not fetched" src="">
@@ -59,6 +63,7 @@
 
     let guessed;
     let guessCount;
+    let gameInProgress = false;
 
     const socket = io('/rooms'+socketQuery);
 
@@ -77,6 +82,31 @@
 
         setReadyCallback()
     })
+
+    document.addEventListener('keyup',
+        (event) => {
+            if(guessed || !gameInProgress)
+                return;
+            if(event.key !== 'Enter')
+                return;
+            if(guessed)
+                return;
+            const guess = document.getElementById('guess').value;
+            if(!guess)
+                return;
+
+            document.getElementById('guess').value = '';
+
+            fetch(`/rooms/guess?key=${key}&id=${myId}&guess=${guess}`,
+                {method: 'POST'})
+                .then(res => res.json()).then(({isCorrect}) => {
+                if(isCorrect) {
+                    guessed = true;
+                    alert('You guessed the word!')
+                    setHiddenWord(guess.toUpperCase());
+                }
+            }).catch()
+        })
 
     function setReadyCallback() {
         document.getElementById("ready")
@@ -133,35 +163,17 @@
     }
 
     socket.on('game.started', ({hiddenWord, imageUrls}) => {
+        gameInProgress = true;
         alert('GAME STARTED!')
         console.log(hiddenWord)
         guessed = false;
         guessCount = 0;
+        clearOldGuesses();
         for(let i = 0; i < imageUrls.length; i++)
             document.getElementById(`image-${i+1}`).src = imageUrls[i];
         document.getElementById("game").style.visibility = "visible"
         formatAndSetHiddenWord(hiddenWord)
         clearRankings();
-        document.getElementById('guess-button')
-        .onclick = () => {
-            if(guessed)
-                return;
-            const guess = document.getElementById('guess').value;
-            if(!guess)
-                return;
-
-            document.getElementById('guess').value = '';
-
-            fetch(`/rooms/guess?key=${key}&id=${myId}&guess=${guess}`,
-                {method: 'POST'})
-            .then(res => res.json()).then(({isCorrect}) => {
-                if(isCorrect) {
-                    guessed = true;
-                    alert('You guessed the word!')
-                    setHiddenWord(guess.toUpperCase());
-                }
-            }).catch()
-        }
     })
 
     function setHiddenWord(word) {
@@ -169,15 +181,47 @@
             .innerHTML = word;
     }
 
+    function moveGuessUp(num) {
+        document.getElementById(`last-guess-${num-1}`).innerHTML =
+            document.getElementById(`last-guess-${num}`).innerHTML
+    }
+
+    function setGuess(num, str='-') {
+        document.getElementById(`last-guess-${num}`).innerHTML = str;
+    }
+
+    function clearOldGuesses() {
+        setGuess(1);
+        setGuess(2);
+        setGuess(3);
+    }
+
+    function isEmptyGuessSpot(num) {
+        return document.getElementById(`last-guess-${num}`).innerHTML === '-'
+    }
+
     socket.on('game.ended', data => {
+        gameInProgress = false;
         console.log(data)
         setAllAsUnready();
         document.getElementById('game')
         .style.visibility = 'hidden';
     })
-    socket.on('guess.submitted', data => {
-        console.log(data)
-        //TODO show chat
+    socket.on('guess.submitted', ({username, guess}) => {
+        const textToShow = `[${username}]: ${guess}`;
+        if(isEmptyGuessSpot(3)) {
+            setGuess(3, textToShow)
+            return;
+        }
+        if(isEmptyGuessSpot(2)) {
+            moveGuessUp(3)
+            setGuess(3, textToShow)
+            return;
+        }
+
+        moveGuessUp(2);
+        moveGuessUp(3);
+        setGuess(3, textToShow);
     })
     socket.on('participant.guessed', ({username}) => {
 
