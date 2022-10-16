@@ -18,34 +18,33 @@ import { CustomExceptionType } from '../../exceptions/exceptions.types';
 import { WebsocketUser } from './rooms.user';
 import { LoggingService } from '../../logging/logging.service';
 import { clearTimeout } from 'timers';
-import axios from 'axios';
-import { config } from '../../config/config';
-import { words } from '../../words/words';
+import { WordsService } from '../../words/service/words.service';
+import { ImagesService } from '../../images/service/images.service';
 
 export type RoomKey = string;
 
-type GameRoomSettings = {
+type RoomSettings = {
   deleteAfterInactiveSeconds: number;
   maxPlayers: number;
   gameDurationSeconds: number;
   disableHints: boolean;
 };
 
-export const defaultSettings: GameRoomSettings = {
+export const defaultSettings: RoomSettings = {
   deleteAfterInactiveSeconds: 30,
   gameDurationSeconds: 60,
   maxPlayers: 5,
   disableHints: false,
 };
 
-export type GameRoomOptions = Partial<GameRoomSettings>;
+export type RoomOptions = Partial<RoomSettings>;
 
-enum GameState {
+enum RoomState {
   WAITING,
   PLAYING,
 }
 
-enum ParticipantStatus {
+enum RoomParticipantStatus {
   WAITING,
   READY,
   GUESSED,
@@ -54,25 +53,24 @@ enum ParticipantStatus {
 class RoomParticipant {
   constructor(public readonly user: WebsocketUser) {}
 
-  private _status = ParticipantStatus.WAITING;
+  private _status = RoomParticipantStatus.WAITING;
 
-  public get status(): ParticipantStatus {
+  public get status(): RoomParticipantStatus {
     return this._status;
   }
 
-  public set status(value: ParticipantStatus) {
+  public set status(value: RoomParticipantStatus) {
     this._status = value;
   }
 }
 
-export class GameRoom {
-  private readonly settings: GameRoomSettings = defaultSettings;
+export class Room {
+  private readonly settings: RoomSettings = defaultSettings;
   private readonly _key: RoomKey = uuid();
   private participants: RoomParticipant[] = [];
-  private gameState: GameState;
+  private roomState: RoomState;
   private wordToGuess: string;
   private hiddenWord: HiddenWord;
-  private readonly shownCharacters: string[] = [' ', '-', '_', '&'];
   private gameEndTimeout: NodeJS.Timeout;
   private hintTimeout: NodeJS.Timeout;
   private readonly deactivationTimeout: NodeJS.Timeout;
@@ -84,7 +82,9 @@ export class GameRoom {
   constructor(
     private readonly roomDestroyer: RoomDestroyer,
     private readonly loggingService: LoggingService,
-    options: GameRoomOptions,
+    private readonly wordsService: WordsService,
+    private readonly imagesService: ImagesService,
+    options: RoomOptions,
   ) {
     if (options)
       Object.keys(defaultSettings).forEach(
@@ -113,7 +113,7 @@ export class GameRoom {
 
   public join(user: WebsocketUser): boolean {
     this.loggingService.info('Trying to join participant', { id: user.id });
-    if (this.gameState !== GameState.WAITING || this.isFull()) return false;
+    if (this.roomState !== RoomState.WAITING || this.isFull()) return false;
     this.addParticipant(new RoomParticipant(user));
     return true;
   }
@@ -130,13 +130,13 @@ export class GameRoom {
       username: participant.user.username,
     } as ParticipantLeftPayload);
     this.ifEmptyDeactivate();
-    if (participant.status === ParticipantStatus.WAITING) {
+    if (participant.status === RoomParticipantStatus.WAITING) {
       this.startGameIfAllReady();
       return;
     }
     if (
-      this.gameState === GameState.PLAYING &&
-      participant.status !== ParticipantStatus.GUESSED
+      this.roomState === RoomState.PLAYING &&
+      participant.status !== RoomParticipantStatus.GUESSED
     )
       this.ifAllGuessedEndGame.bind(this)();
   }
@@ -149,18 +149,14 @@ export class GameRoom {
   private allReady(): boolean {
     return (
       this.participants.length >= 2 &&
-      this.participants.every((p) => p.status === ParticipantStatus.READY)
+      this.participants.every((p) => p.status === RoomParticipantStatus.READY)
     );
   }
 
   private allGuessed(): boolean {
     return this.participants.every(
-      (p) => p.status === ParticipantStatus.GUESSED,
+      (p) => p.status === RoomParticipantStatus.GUESSED,
     );
-  }
-
-  private static generateRandomSuffix(): string {
-    return (Math.floor(Math.random() * 10000) + 1000).toString();
   }
 
   private setName(participant: RoomParticipant): void {
@@ -170,8 +166,7 @@ export class GameRoom {
         (p) => p.user.username === participant.user.username,
       )
     )
-      participant.user.username =
-        participant.user.username + GameRoom.generateRandomSuffix();
+      participant.user.username += WordsService.getRandomSuffix();
   }
 
   private sendCredentials(participant: RoomParticipant): void {
@@ -180,12 +175,13 @@ export class GameRoom {
       username: participant.user.username,
       maxPlayers: this.settings.maxPlayers,
       gameDurationSeconds: this.settings.gameDurationSeconds,
+      hintsEnabled: !this.settings.disableHints,
       participants: {
         readyUsernames: this.participants
-          .filter((p) => p.status === ParticipantStatus.READY)
+          .filter((p) => p.status === RoomParticipantStatus.READY)
           .map((p) => p.user.username),
         unreadyUsernames: this.participants
-          .filter((p) => p.status !== ParticipantStatus.READY)
+          .filter((p) => p.status !== RoomParticipantStatus.READY)
           .map((p) => p.user.username),
       },
     } as GameDataReceivedPayload);
@@ -209,11 +205,11 @@ export class GameRoom {
     const participant: RoomParticipant = this.findParticipantById(id);
     if (!participant)
       throw new CustomException(CustomExceptionType.WRONG_ID, { id: id });
-    if (this.gameState === GameState.PLAYING)
+    if (this.roomState === RoomState.PLAYING)
       throw new CustomException(CustomExceptionType.GAME_ALREADY_STARTED, {
         key: this.key,
       });
-    participant.status = ParticipantStatus.READY;
+    participant.status = RoomParticipantStatus.READY;
     this.emitToAll(RoomEvent.PARTICIPANT_READY, {
       username: participant.user.username,
     } as ParticipantReadyPayload);
@@ -221,7 +217,7 @@ export class GameRoom {
   }
 
   private startGameIfAllReady(): void {
-    if (this.allReady()) this.startGame();
+    if (this.allReady()) this.startGame().then();
   }
 
   private findParticipantById(id: string): RoomParticipant | undefined {
@@ -230,15 +226,10 @@ export class GameRoom {
   }
 
   private sendHint(): void {
-    const hiddenIndexes: number[] = this.hiddenWord
-      .map((val, index) => (!val ? index : null))
-      .filter((v) => v !== null);
-
-    const randomIndexToReveal: number =
-      hiddenIndexes[Math.floor(Math.random() * hiddenIndexes.length)];
-
-    this.hiddenWord[randomIndexToReveal] =
-      this.wordToGuess[randomIndexToReveal];
+    this.hiddenWord = this.wordsService.getHint(
+      this.wordToGuess,
+      this.hiddenWord,
+    );
     this.emitToAll(RoomEvent.LETTER_REVEALED, {
       hiddenWord: this.hiddenWord,
     } as LetterRevealedPayload);
@@ -253,33 +244,12 @@ export class GameRoom {
     this.hintTimeout = setTimeout(this.sendHint.bind(this), timeMs);
   }
 
-  private getImageUrls(): Promise<string[]> {
-    console.log(this.wordToGuess);
-    //Documentation https://serpapi.com/images-results
-    //random query to avoid caching idk why
-    return axios
-      .get(`https://serpapi.com/search?z=${Math.random()}`, {
-        data: {
-          q: this.wordToGuess,
-          tbm: 'isch', //to fetch images
-          api_key: config.API_KEY,
-          no_cache: true,
-        },
-      })
-      .then((res) =>
-        res.data['images_results']
-          .slice(0, 5)
-          .map((search) => search['thumbnail']),
-      );
-  }
-
   private async startGame(): Promise<void> {
-    this.gameState = GameState.PLAYING;
-
-    this.generateWordToGuess();
-
-    const imageUrls: string[] = await this.getImageUrls();
-
+    this.roomState = RoomState.PLAYING;
+    this.setWordToGuess();
+    const imageUrls: string[] = await this.imagesService.getImageUrls(
+      this.wordToGuess,
+    );
     if (!this.settings.disableHints) this.setHintTimeout();
 
     this.emitToAll(RoomEvent.GAME_STARTED, {
@@ -293,15 +263,11 @@ export class GameRoom {
     );
   }
 
-  private generateWordToGuess(): void {
-    this.wordToGuess = words[Math.floor(Math.random() * words.length)];
-    this.loggingService.info('Generated a word', {
-      word: this.wordToGuess,
-      key: this.key,
-    });
-    this.hiddenWord = this.wordToGuess
-      .split('')
-      .map((char) => (this.shownCharacters.includes(char) ? char : null));
+  private setWordToGuess(): void {
+    const { word, hiddenWord }: { word: string; hiddenWord: HiddenWord } =
+      this.wordsService.getRandomWord();
+    this.wordToGuess = word;
+    this.hiddenWord = hiddenWord;
   }
 
   private ifAllGuessedEndGame(): void {
@@ -313,39 +279,47 @@ export class GameRoom {
     if (!participant)
       throw new CustomException(CustomExceptionType.WRONG_ID, { id: id });
 
-    if (this.gameState !== GameState.PLAYING)
+    if (this.roomState !== RoomState.PLAYING)
       throw new CustomException(CustomExceptionType.GAME_NOT_STARTED, {
         id: id,
         key: this.key,
       });
 
-    if (participant.status === ParticipantStatus.GUESSED)
+    if (participant.status === RoomParticipantStatus.GUESSED)
       throw new CustomException(CustomExceptionType.ALREADY_GUESSED, {
         id: id,
       });
 
-    const formattedGuess: string = guess.replace('%20', ' ');
-    if (this.wordToGuess === formattedGuess) {
-      participant.status = ParticipantStatus.GUESSED;
+    const {
+      formattedGuess,
+      matches,
+    }: { formattedGuess: string; matches: boolean } = this.wordsService.matches(
+      guess,
+      this.wordToGuess,
+    );
+    if (matches) {
+      participant.status = RoomParticipantStatus.GUESSED;
       this.emitToAll(RoomEvent.PARTICIPANT_GUESSED, {
         username: participant.user.username,
       } as ParticipantGuessedPayload);
       this.ifAllGuessedEndGame();
       return true;
     }
-    console.log('guess ' + formattedGuess + ' was wrong.');
+
     this.emitToAll(RoomEvent.GUESS_SUBMITTED, {
       username: participant.user.username,
-      guess: guess,
+      guess: formattedGuess,
     } as GuessSubmittedPayload);
     return false;
   }
 
   private setInitialGameState(): void {
-    this.gameState = GameState.WAITING;
+    this.roomState = RoomState.WAITING;
     this.wordToGuess = null;
     this.hiddenWord = null;
-    this.participants.forEach((p) => (p.status = ParticipantStatus.WAITING));
+    this.participants.forEach(
+      (p) => (p.status = RoomParticipantStatus.WAITING),
+    );
   }
 
   private endGame(): void {

@@ -2,12 +2,8 @@
 
 import { IsBoolean, IsNotEmpty, IsOptional, Max, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { defaultSettings, RoomKey } from './rooms.game-room';
+import { defaultSettings, RoomKey } from './rooms.room';
 import { Transform, Type } from 'class-transformer';
-import {
-  ApiModelProperty,
-  ApiResponseModelProperty,
-} from '@nestjs/swagger/dist/decorators/api-model-property.decorator';
 
 export class CreateRoomParams {
   @ApiPropertyOptional({

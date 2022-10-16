@@ -15,6 +15,7 @@ export type GameDataReceivedPayload = {
   username: string;
   maxPlayers: number;
   gameDurationSeconds: number;
+  hintsEnabled: boolean;
   participants: {
     readyUsernames: string[];
     unreadyUsernames: string[];

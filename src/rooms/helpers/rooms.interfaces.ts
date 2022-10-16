@@ -1,3 +1,3 @@
-import { GameRoom } from './rooms.game-room';
+import { Room } from './rooms.room';
 
-export type RoomDestroyer = (room: GameRoom) => void;
+export type RoomDestroyer = (room: Room) => void;

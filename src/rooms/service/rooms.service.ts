@@ -1,31 +1,34 @@
 import { Injectable } from '@nestjs/common';
-import { GameRoom, GameRoomOptions, RoomKey } from '../helpers/rooms.game-room';
+import { Room, RoomOptions, RoomKey } from '../helpers/rooms.room';
 import { RoomDestroyer } from '../helpers/rooms.interfaces';
 import { CustomException } from '../../exceptions/exceptions.custom-exception';
 import { CustomExceptionType } from '../../exceptions/exceptions.types';
 import { WebsocketUser } from '../helpers/rooms.user';
 import { LoggingService } from '../../logging/logging.service';
 import { GuessResultDto, RoomCredentialsDto } from '../helpers/rooms.dto';
+import { RoomsFactory } from '../factory/rooms.factory';
 
 @Injectable()
 export class RoomsService {
-  private readonly activeRoomsRecord: { [key: string]: GameRoom } = {};
-  private readonly roomDestroyer: RoomDestroyer = (gameRoom: GameRoom) => {
+  private readonly activeRoomsRecord: { [key: string]: Room } = {};
+  private readonly roomDestroyer: RoomDestroyer = (gameRoom: Room) => {
     this.deleteRoom(gameRoom.key);
   };
 
-  constructor(private readonly loggingService: LoggingService) {}
+  constructor(
+    private readonly loggingService: LoggingService,
+    private readonly gameRoomsFactory: RoomsFactory,
+  ) {}
 
-  createRoom(gameRoomOptions: GameRoomOptions): RoomCredentialsDto {
+  createRoom(gameRoomOptions: RoomOptions): RoomCredentialsDto {
     return this.getNewRoomCredentials(gameRoomOptions);
   }
 
   private getNewRoomCredentials(
-    gameRoomOptions: GameRoomOptions,
+    gameRoomOptions: RoomOptions,
   ): RoomCredentialsDto {
-    const newRoom: GameRoom = new GameRoom(
+    const newRoom: Room = this.gameRoomsFactory.create(
       this.roomDestroyer.bind(this),
-      this.loggingService,
       gameRoomOptions,
     );
     this.activeRoomsRecord[newRoom.key.toString()] = newRoom;
@@ -35,7 +38,7 @@ export class RoomsService {
     };
   }
 
-  private getRoom(key: RoomKey): GameRoom | undefined {
+  private getRoom(key: RoomKey): Room | undefined {
     if (key) return this.activeRoomsRecord[key.toString()];
   }
 
@@ -47,7 +50,7 @@ export class RoomsService {
   }
 
   joinRoom(user: WebsocketUser, key: RoomKey): void {
-    const room: GameRoom = this.getRoom(key);
+    const room: Room = this.getRoom(key);
     if (!room) {
       user.disconnect('Room not found.');
       return;
@@ -56,14 +59,14 @@ export class RoomsService {
   }
 
   setReady(id: string, key: string): void {
-    const room: GameRoom = this.getRoom(key);
+    const room: Room = this.getRoom(key);
     if (!room)
       throw new CustomException(CustomExceptionType.WRONG_KEY, { key: key });
     room.setReady(id);
   }
 
   submitGuess(id: string, key: string, guess: string): GuessResultDto {
-    const room: GameRoom = this.getRoom(key);
+    const room: Room = this.getRoom(key);
     if (!room)
       throw new CustomException(CustomExceptionType.WRONG_KEY, { key: key });
     return {

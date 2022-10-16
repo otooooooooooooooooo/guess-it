@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Query } from '@nestjs/common';
+import { Controller, Post, Put, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RoomsService } from '../service/rooms.service';
 import {
@@ -10,7 +10,6 @@ import {
 } from '../helpers/rooms.dto';
 import { getSwaggerSummary } from '../../exceptions/exceptions.swagger-summary';
 import { CustomExceptionType } from '../../exceptions/exceptions.types';
-import { config } from '../../config/config';
 
 @ApiTags('rooms')
 @Controller('rooms')

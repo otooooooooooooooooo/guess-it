@@ -16,6 +16,8 @@
 
     <h3 id="game-duration"></h3>
 
+    <h3 id="hints-enabled"></h3>
+
     <h3>Participants</h3>
     <ul id="participants">
 
@@ -61,12 +63,14 @@
     const socket = io('/rooms'+socketQuery);
 
     socket.on('game.data.received', ({id, username, maxPlayers, gameDurationSeconds,
+        hintsEnabled,
                                      participants}) => {
         myId = id;
         myUsername = username
         document.getElementById("username").innerHTML = 'Username: ' + myUsername;
         document.getElementById("room-size").innerHTML = 'Room size: ' + maxPlayers;
         document.getElementById("game-duration").innerHTML = 'Game duration: ' + gameDurationSeconds+'s';
+        document.getElementById("hints-enabled").innerHTML = 'Hints ' + (hintsEnabled? 'enabled' : 'disabled');
 
         participants['readyUsernames'].forEach(name => setParticipant(name, true));
         participants['unreadyUsernames'].forEach(name => setParticipant(name, false));
@@ -154,7 +158,7 @@
                 if(isCorrect) {
                     guessed = true;
                     alert('You guessed the word!')
-                    setHiddenWord(guess);
+                    setHiddenWord(guess.toUpperCase());
                 }
             }).catch()
         }
