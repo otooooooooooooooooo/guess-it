@@ -65,7 +65,7 @@ $ npm run test:cov
 and receive the room key
 
 * Join room by opening websocket (using socket.io)
-on namespace /rooms?key=keyReceivedFromApiOrFriend.
+on namespace /rooms?key=keyReceivedFromApiOrFriend?username=optionalUsername.
 If connection was closed immediately, it means that
 key was incorrect, room was deleted, room is full or
 game is in progress
