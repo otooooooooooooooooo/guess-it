@@ -23,7 +23,7 @@
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
 ## Description
-Api for the guessing based game.
+Api of the guessing based game just for web backend portfolio
 
 ## Installation
 
