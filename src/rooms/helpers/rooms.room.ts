@@ -25,13 +25,35 @@ import { ImagesService } from '../../images/service/images.service';
 export type RoomKey = string;
 
 type RoomSettings = {
+  /**
+   * Amount of seconds after which
+   * room will deactivate if no one enters it
+   * after creation
+   */
   deleteAfterInactiveSeconds: number;
+  /**
+   * Maximum amount of allowed players in room
+   */
   maxPlayers: number;
+  /**
+   * Duration of each game
+   */
   gameDurationSeconds: number;
+  /**
+   * Whether or not hints are disabled in games
+   */
   disableHints: boolean;
+  /**
+   * Whether or not use custom words list
+   */
   customWords: boolean;
 };
 
+/**
+ * Default settings that will be used
+ * if any of the provided options fields
+ * will not be present
+ */
 export const defaultSettings: RoomSettings = {
   deleteAfterInactiveSeconds: 30,
   gameDurationSeconds: 60,
@@ -43,16 +65,34 @@ export const defaultSettings: RoomSettings = {
 export type RoomOptions = Partial<RoomSettings>;
 
 enum RoomState {
+  /**
+   * Game has not started yet
+   */
   WAITING,
+  /**
+   * Game in progress
+   */
   PLAYING,
 }
 
 enum RoomParticipantStatus {
+  /**
+   * Participant has not marked ready
+   */
   WAITING,
+  /**
+   * Participant marked as ready
+   */
   READY,
+  /**
+   * Participant already guessed the current word
+   */
   GUESSED,
 }
 
+/**
+ * Participant class that wraps WebsocketUser and room-specific data
+ */
 class RoomParticipant {
   constructor(public readonly user: WebsocketUser) {}
 
@@ -74,8 +114,20 @@ export class Room {
   private roomState: RoomState;
   private wordToGuess: string;
   private hiddenWord: HiddenWord;
+  /**
+   * Handler of the game end timeout
+   * @private
+   */
   private gameEndTimeout: NodeJS.Timeout;
+  /**
+   * Handler of the new hint
+   * @private
+   */
   private hintTimeout: NodeJS.Timeout;
+  /**
+   * Handler of the room deactivation
+   * @private
+   */
   private readonly deactivationTimeout: NodeJS.Timeout;
   private readonly customWords: string[] = [];
 
@@ -84,6 +136,9 @@ export class Room {
   }
 
   constructor(
+    /**
+     * Function that will be called when room is about to be deactivated
+     */
     private readonly roomDestroyer: RoomDestroyer,
     private readonly loggingService: LoggingService,
     private readonly wordsService: WordsService,
@@ -97,6 +152,10 @@ export class Room {
     this.setInitialGameState();
 
     const that = this;
+    /**
+     * Set timeout to deactivate room if
+     * no one enters it after creation
+     */
     this.deactivationTimeout = setTimeout(() => {
       this.loggingService.info('Initiated scheduled check', { key: this._key });
       that.ifEmptyDeactivate();
@@ -115,6 +174,11 @@ export class Room {
     return this.participants.length === this.settings.maxPlayers;
   }
 
+  /**
+   * try to join user in the room
+   * @param user
+   * @returns boolean whether or not join was successful
+   */
   public join(user: WebsocketUser): boolean {
     this.loggingService.info('Trying to join participant', { id: user.id });
     if (this.roomState !== RoomState.WAITING || this.isFull()) return false;
@@ -122,14 +186,19 @@ export class Room {
     return true;
   }
 
-  private removeFromList(participant: RoomParticipant) {
+  private removeParticipant(participant: RoomParticipant) {
     this.participants = this.participants.filter(
       (p) => p.user.id !== participant.user.id,
     );
   }
 
+  /**
+   * Function that should be called when participant is disconnected
+   * @param participant
+   * @private
+   */
   private onDisconnect(participant: RoomParticipant): void {
-    this.removeFromList(participant);
+    this.removeParticipant(participant);
     this.emitToAll(RoomEvent.PARTICIPANT_LEFT, {
       username: participant.user.username,
     } as ParticipantLeftPayload);
@@ -150,19 +219,32 @@ export class Room {
     if (this.isEmpty()) this.deactivate();
   }
 
-  private allReady(): boolean {
+  /**
+   * Checks if participants are ready to start
+   * @private
+   */
+  private allParticipantsReady(): boolean {
     return (
       this.participants.length >= 2 &&
       this.participants.every((p) => p.status === RoomParticipantStatus.READY)
     );
   }
 
+  /**
+   * Checks if all participants have already guessed the word
+   * @private
+   */
   private allGuessed(): boolean {
     return this.participants.every(
       (p) => p.status === RoomParticipantStatus.GUESSED,
     );
   }
 
+  /**
+   * Set participant's name to avoid duplicates or empty names
+   * @param participant
+   * @private
+   */
   private setName(participant: RoomParticipant): void {
     if (!participant.user.username) participant.user.username = 'Guest';
     if (
@@ -173,6 +255,11 @@ export class Room {
       participant.user.username += WordsService.getRandomSuffix();
   }
 
+  /**
+   * Send room state data and user credentials to user
+   * @param participant
+   * @private
+   */
   private sendCredentials(participant: RoomParticipant): void {
     participant.user.emit(RoomEvent.GAME_DATA_RECEIVED, {
       id: participant.user.id,
@@ -193,7 +280,6 @@ export class Room {
   }
 
   private addParticipant(participant: RoomParticipant): void {
-    console.log('Adding participant');
     clearTimeout(this.deactivationTimeout);
     this.setName(participant);
     this.participants.push(participant);
@@ -226,7 +312,8 @@ export class Room {
   }
 
   private startGameIfAllReady(): void {
-    if (this.allReady() && this.wordListReady()) this.startGame().then();
+    if (this.allParticipantsReady() && this.wordListReady())
+      this.startGame().then();
   }
 
   private findParticipantById(id: string): RoomParticipant | undefined {
@@ -234,6 +321,10 @@ export class Room {
     return this.participants.find((p) => p.user.id === id) || undefined;
   }
 
+  /**
+   * Sent new hint to participants
+   * @private
+   */
   private sendHint(): void {
     this.hiddenWord = this.wordsService.getHint(
       this.wordToGuess,
@@ -361,6 +452,7 @@ export class Room {
         id: id,
         key: this.key,
       });
+    //TODO check duplicate words
     this.customWords.push(word);
     this.emitToAll(RoomEvent.WORD_ADDED, {
       wordCount: this.customWords.length,

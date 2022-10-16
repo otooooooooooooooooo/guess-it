@@ -2,6 +2,9 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import uuid = require('uuid');
 import { LoggingService } from './logging.service';
 
+/**
+ * Middleware that logs http requests and responses
+ */
 @Injectable()
 export class LoggingMiddleware implements NestMiddleware {
   constructor(private readonly loggingService: LoggingService) {}

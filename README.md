@@ -22,11 +22,8 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-##Words copied from - https://github.com/engichang1467/word-pictionary-list
-
 ## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Api for the guessing based game.
 
 ## Installation
 
@@ -37,23 +34,15 @@ $ npm install
 ## Running the app
 
 ```bash
-# local (generates typedoc files)
-$ npm run start:local
+# local (generates typedoc files too)
+$ npm run start
 
 # watch mode
-$ npm run start:local:watch
+$ npm run start:watch
 
 # production mode
 $ npm run start:prod
 ```
-
-##Documentation
-
-default port on local - 3000
-
-Swagger available at /swagger endpoint (localhost:3000/swagger)
-
-Typedoc available at /typedoc endpoint (localhost:3000/typedoc)
 
 ## Test
 
@@ -67,6 +56,67 @@ $ npm run test:e2e
 # test coverage
 $ npm run test:cov
 ```
+
+### Application flow:
+
+* (optional) Create room with POST request on endpoint /rooms
+and receive the room key
+
+* Join room by opening websocket (using socket.io)
+on namespace /rooms?key=keyReceivedFromApiOrFriend.
+If connection was closed immediately, it means that
+key was incorrect, room was deleted, room is full or
+game is in progress
+
+* Listen to websocket events to receive
+your credentials (used to submit word guesses
+and adding custom words) and keep updated with
+current game state.
+
+* Mark yourself ready by sending PUT request
+on endpoint /rooms/ready. (Game will not start until all
+players are marked ready before each game)
+
+* (optional) If custom word mode is active, add
+custom words with POST request on endpoint /rooms/word (Game
+will not start if no custom words are provided)
+
+* (optional) To try and guess the word, submit guess
+with POST request on endpoint /rooms/guess
+
+##Documentation
+
+See detailed HTTP documentation in swagger (Will be available on /swagger address
+when application is running)
+
+See detailed events information (names and payload types) on /typedoc/modules/rooms_helpers_rooms_events.html
+when application is running and typedoc files have been generated
+
+See sample client application on /public address
+when application is running.
+##
+
+
+
+
+###Prerequisite
+Api uses [Serpapi](https://serpapi.com/) for fetching images
+from Google. So api key will be needed in configuration.
+You can generate it yourself for free (100 queries = 100games)
+by registering on Serpapi.
+
+##Words copied from - https://github.com/engichang1467/word-pictionary-list
+
+
+###Configuration
+App configuration is specified in
+.env file:
+* PORT - number(defaults to 300)
+* CORS - boolean(defaults to true)
+* API_KEY - string(API key for Serpapi)
+
+###Credits
+Game words list copied from [engichang1467/word-pictionary-list](https://github.com/engichang1467/word-pictionary-list)
 
 ## Support
 

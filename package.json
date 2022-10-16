@@ -21,8 +21,6 @@
     "docs": "typedoc"
   },
   "pre-commit": [
-    "test:cov",
-    "lint",
     "format"
   ],
   "dependencies": {

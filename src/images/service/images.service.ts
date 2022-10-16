@@ -5,7 +5,7 @@ import { config } from '../../config/config';
 @Injectable()
 export class ImagesService {
   /**
-   * @description get 5 images
+   * @description get maximum of 5 image urls from search results of keyword
    * @param keyword
    * @private
    */

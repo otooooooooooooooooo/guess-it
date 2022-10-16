@@ -11,6 +11,15 @@ export class RoomsGateway implements OnGatewayConnection {
     private readonly loggingService: LoggingService,
   ) {}
 
+  /**
+   * Socket connection query:
+   * key (room key) - required
+   * username - optional
+   * @description Will connect automatically if joining room
+   * was unsuccessful
+   * @param client
+   * @param args
+   */
   handleConnection(client: any, ...args: any[]): any {
     const { key, username }: { key: string; username: string } =
       client.handshake.query;

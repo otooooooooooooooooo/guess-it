@@ -12,7 +12,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { defaultSettings, RoomKey } from './rooms.room';
 import { Transform, Type } from 'class-transformer';
-import {IsValidWord} from "./rooms.dto.validator";
+import { IsValidWord } from './rooms.dto.validator';
 
 export class CreateRoomParams {
   @ApiPropertyOptional({
@@ -87,13 +87,19 @@ export class AddCustomWordParams extends CredentialsBaseParams {
 }
 
 export class RoomCredentialsDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'key to access room',
+  })
   key: RoomKey;
-  @ApiProperty()
+  @ApiProperty({
+    description: 'time after which room will be deleted if no one enters',
+  })
   willDeleteAfterSeconds: number;
 }
 
 export class GuessResultDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Whether or not the guess was correct',
+  })
   isCorrect: boolean;
 }

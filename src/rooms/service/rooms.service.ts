@@ -11,6 +11,11 @@ import { RoomsFactory } from '../factory/rooms.factory';
 @Injectable()
 export class RoomsService {
   private readonly activeRoomsRecord: { [key: string]: Room } = {};
+  /**
+   * room destroyer which will be notified when room is deactivated and
+   * will delete it from memory
+   * @param gameRoom
+   */
   private readonly roomDestroyer: RoomDestroyer = (gameRoom: Room) => {
     this.deleteRoom(gameRoom.key);
   };

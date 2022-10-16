@@ -1,3 +1,6 @@
+/**
+ * Websocket user that wraps socket and user's data
+ */
 export class WebsocketUser {
   constructor(
     public readonly id: string,

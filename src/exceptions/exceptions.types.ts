@@ -1,3 +1,7 @@
+/**
+ * Custom exception types which are wrapped as custom http exceptions
+ * by custom exceptions filter
+ */
 export enum CustomExceptionType {
   GAME_ALREADY_STARTED = 'Game in progress',
   WRONG_KEY = 'Wrong room key',
