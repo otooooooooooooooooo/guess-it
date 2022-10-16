@@ -107,7 +107,7 @@ by registering on Serpapi.
 ### Configuration
 App configuration is specified in
 .env file:
-* PORT - number(defaults to 300)
+* PORT - number(defaults to 3000)
 * CORS - boolean(defaults to false)
 * API_KEY - string(API key for Serpapi)
 
