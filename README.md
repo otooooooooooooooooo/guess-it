@@ -102,9 +102,6 @@ from Google. So api key will be needed in configuration.
 You can generate it yourself for free (100 queries = 100games)
 by registering on Serpapi.
 
-## Words copied from - https://github.com/engichang1467/word-pictionary-list
-
-
 ### Configuration
 App configuration is specified in
 .env file:
