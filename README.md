@@ -84,7 +84,7 @@ will not start if no custom words are provided)
 * (optional) To try and guess the word, submit guess
 with POST request on endpoint /rooms/guess
 
-##Documentation
+## Documentation
 
 See detailed HTTP documentation in swagger (Will be available on /swagger address
 when application is running)
@@ -94,28 +94,25 @@ when application is running and typedoc files have been generated
 
 See sample client application on /public address
 when application is running.
-##
 
 
-
-
-###Prerequisite
+### Prerequisite
 Api uses [Serpapi](https://serpapi.com/) for fetching images
 from Google. So api key will be needed in configuration.
 You can generate it yourself for free (100 queries = 100games)
 by registering on Serpapi.
 
-##Words copied from - https://github.com/engichang1467/word-pictionary-list
+## Words copied from - https://github.com/engichang1467/word-pictionary-list
 
 
-###Configuration
+### Configuration
 App configuration is specified in
 .env file:
 * PORT - number(defaults to 300)
 * CORS - boolean(defaults to true)
 * API_KEY - string(API key for Serpapi)
 
-###Credits
+### Credits
 Game words list copied from [engichang1467/word-pictionary-list](https://github.com/engichang1467/word-pictionary-list)
 
 ## Support
