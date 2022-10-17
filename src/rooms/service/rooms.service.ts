@@ -70,6 +70,12 @@ export class RoomsService {
     room.setReady(id);
   }
 
+  /**
+   *
+   * @param id
+   * @param key
+   * @param guess formatted guess
+   */
   submitGuess(id: string, key: string, guess: string): GuessResultDto {
     const room: Room = this.getRoom(key);
     if (!room)
@@ -79,6 +85,12 @@ export class RoomsService {
     };
   }
 
+  /**
+   *
+   * @param id
+   * @param key
+   * @param word formatted word
+   */
   addCustomWord(id: string, key: string, word: string): void {
     const room: Room = this.getRoom(key);
     if (!room)

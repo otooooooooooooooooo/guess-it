@@ -21,6 +21,7 @@
     "docs": "typedoc"
   },
   "pre-commit": [
+    "lint",
     "format"
   ],
   "dependencies": {

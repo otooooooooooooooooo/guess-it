@@ -151,14 +151,13 @@ export class Room {
       );
     this.setInitialGameState();
 
-    const that = this;
     /**
      * Set timeout to deactivate room if
      * no one enters it after creation
      */
     this.deactivationTimeout = setTimeout(() => {
       this.loggingService.info('Initiated scheduled check', { key: this._key });
-      that.ifEmptyDeactivate();
+      this.ifEmptyDeactivate.bind(this)();
     }, this.settings.deleteAfterInactiveSeconds * 1000);
   }
 
@@ -292,6 +291,10 @@ export class Room {
     });
   }
 
+  /**
+   *
+   * @param id user id
+   */
   public setReady(id: string): void {
     const participant: RoomParticipant = this.findParticipantById(id);
     if (!participant)
@@ -375,6 +378,11 @@ export class Room {
     if (this.allGuessed()) this.endGame();
   }
 
+  /**
+   *
+   * @param id user id
+   * @param guess formatted guess
+   */
   public guess(id: string, guess: string): boolean {
     const participant: RoomParticipant = this.findParticipantById(id);
     if (!participant)
@@ -391,14 +399,7 @@ export class Room {
         id: id,
       });
 
-    const {
-      formattedGuess,
-      matches,
-    }: { formattedGuess: string; matches: boolean } = this.wordsService.matches(
-      guess,
-      this.wordToGuess,
-    );
-    if (matches) {
+    if (guess === this.wordToGuess) {
       participant.status = RoomParticipantStatus.GUESSED;
       this.emitToAll(RoomEvent.PARTICIPANT_GUESSED, {
         username: participant.user.username,
@@ -409,7 +410,7 @@ export class Room {
 
     this.emitToAll(RoomEvent.GUESS_SUBMITTED, {
       username: participant.user.username,
-      guess: formattedGuess,
+      guess: guess,
     } as GuessSubmittedPayload);
     return false;
   }
@@ -441,6 +442,11 @@ export class Room {
     this.roomDestroyer(this);
   }
 
+  /**
+   *
+   * @param id user id
+   * @param word formatted word
+   */
   addCustomWord(id: string, word: string) {
     const participant: RoomParticipant = this.findParticipantById(id);
     if (!participant)
