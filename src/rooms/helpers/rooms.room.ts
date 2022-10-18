@@ -335,7 +335,7 @@ export class Room {
     this.emitToAll(RoomEvent.LETTER_REVEALED, {
       hiddenWord: this.hiddenWord,
     } as LetterRevealedPayload);
-    this.setHintTimeout();
+    this.setHintTimeout.bind(this)();
   }
 
   private setHintTimeout(): void {
