@@ -71,6 +71,14 @@ export type ConnectionErrorPayload = {
   reason: ConnectionErrorReason;
 };
 
+type Participant = {
+  username: string;
+};
+
+type ParticipantWithStatus = Participant & {
+  isReady: boolean;
+};
+
 export type GameDataReceivedPayload = {
   /**
    * Id of the participant which
@@ -104,38 +112,14 @@ export type GameDataReceivedPayload = {
   /**
    * Current online in the room
    */
-  participants: {
-    /**
-     * Participants that marked as ready
-     */
-    readyUsernames: string[];
-    /**
-     * Participant that are not marked as ready
-     */
-    unreadyUsernames: string[];
-  };
+  participants: ParticipantWithStatus[];
 };
 
-export type ParticipantJoinedPayload = {
-  /**
-   * Username of the joined participant
-   */
-  username: string;
-};
+export type ParticipantJoinedPayload = Participant;
 
-export type ParticipantLeftPayload = {
-  /**
-   * Username of the participant that left
-   */
-  username: string;
-};
+export type ParticipantLeftPayload = Participant;
 
-export type ParticipantReadyPayload = {
-  /**
-   * Username of the participant that marked ready
-   */
-  username: string;
-};
+export type ParticipantReadyPayload = Participant;
 
 /**
  * Array of the hidden word's characters.
@@ -161,23 +145,14 @@ export type GameEndedPayload = {
   revealedWord: string;
 };
 
-export type GuessSubmittedPayload = {
-  /**
-   * Username of the participant that submitted a guess
-   */
-  username: string;
+export type GuessSubmittedPayload = Participant & {
   /**
    * Guess that was submitted
    */
   guess: string;
 };
 
-export type ParticipantGuessedPayload = {
-  /**
-   * Username of the participant that guessed the word
-   */
-  username: string;
-};
+export type ParticipantGuessedPayload = Participant;
 
 export type LetterRevealedPayload = {
   /**

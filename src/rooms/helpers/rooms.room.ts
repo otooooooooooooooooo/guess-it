@@ -283,14 +283,12 @@ export class Room {
       gameDurationSeconds: this.settings.gameDurationSeconds,
       hintsEnabled: !this.settings.disableHints,
       customWords: this.settings.customWords ? this.customWords.length : false,
-      participants: {
-        readyUsernames: this.participants
-          .filter((p) => p.status === RoomParticipantStatus.READY)
-          .map((p) => p.user.username),
-        unreadyUsernames: this.participants
-          .filter((p) => p.status !== RoomParticipantStatus.READY)
-          .map((p) => p.user.username),
-      },
+      participants: this.participants.map((p) => {
+        return {
+          username: p.user.username,
+          isReady: p.status === RoomParticipantStatus.READY,
+        };
+      }),
     } as GameDataReceivedPayload);
   }
 

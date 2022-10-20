@@ -116,9 +116,7 @@
         document.getElementById("game-duration").innerHTML = 'Game duration: ' + gameDurationSeconds+'s';
         document.getElementById("hints-enabled").innerHTML = 'Hints ' + (hintsEnabled? 'enabled' : 'disabled');
 
-
-        participants['readyUsernames'].forEach(name => setParticipant(name, true));
-        participants['unreadyUsernames'].forEach(name => setParticipant(name, false));
+        participants.forEach(({username, isReady}) => setParticipant(username, isReady));
 
         setReadyCallback()
     })
