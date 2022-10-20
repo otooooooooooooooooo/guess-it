@@ -80,6 +80,10 @@
 
     const socket = io('/rooms'+socketQuery);
 
+    socket.on('connection.error', ({reason}) => {
+        document.body.innerHTML = reason;
+    })
+
     function setCustomWordsMode() {
         customWordsMode = true;
         document.getElementById('custom-word-div').style.visibility = "visible";
