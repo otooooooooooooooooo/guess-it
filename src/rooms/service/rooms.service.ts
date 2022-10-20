@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Room, RoomOptions, RoomKey } from '../helpers/rooms.room';
+import { Room, RoomKey, RoomOptions } from '../helpers/rooms.room';
 import { RoomDestroyer } from '../helpers/rooms.interfaces';
 import { CustomException } from '../../exceptions/exceptions.custom-exception';
 import { CustomExceptionType } from '../../exceptions/exceptions.types';
@@ -7,6 +7,11 @@ import { WebsocketUser } from '../helpers/rooms.user';
 import { LoggingService } from '../../logging/logging.service';
 import { GuessResultDto, RoomCredentialsDto } from '../helpers/rooms.dto';
 import { RoomsFactory } from '../factory/rooms.factory';
+import {
+  ConnectionErrorPayload,
+  ConnectionErrorReason,
+  RoomEvent,
+} from '../helpers/rooms.events';
 
 @Injectable()
 export class RoomsService {
@@ -57,10 +62,13 @@ export class RoomsService {
   joinRoom(user: WebsocketUser, key: RoomKey): void {
     const room: Room = this.getRoom(key);
     if (!room) {
-      user.disconnect('Room not found.');
+      user.emit(RoomEvent.CONNECTION_ERROR, {
+        reason: ConnectionErrorReason.WRONG_KEY,
+      } as ConnectionErrorPayload);
+      user.disconnect();
       return;
     }
-    if (!room.join(user)) user.disconnect('Can not join room.');
+    room.join(user);
   }
 
   setReady(id: string, key: string): void {

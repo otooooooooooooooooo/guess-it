@@ -66,9 +66,8 @@ and receive the room key
 
 * Join room by opening websocket (using socket.io)
 on namespace /rooms?key=keyReceivedFromApiOrFriend?username=optionalUsername.
-If connection was closed immediately, it means that
-key was incorrect, room was deleted, room is full or
-game is in progress
+If an error is occurred during connection, connection error
+is emitted and connection is closed from server.
 
 * Listen to websocket events to receive
 your credentials (used to submit word guesses

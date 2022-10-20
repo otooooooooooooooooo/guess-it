@@ -3,6 +3,10 @@
  */
 export enum RoomEvent {
   /**
+   * Is fired when there is a problem while joining the room
+   */
+  CONNECTION_ERROR = 'connection.error',
+  /**
    * Is fired to the newly joined participant
    */
   GAME_DATA_RECEIVED = 'game.data.received',
@@ -52,6 +56,21 @@ export enum RoomEvent {
 /**
  * According payloads to room events
  */
+
+export enum ConnectionErrorReason {
+  KEY_NOT_PROVIDED = 'Key was not provided in socket query',
+  WRONG_KEY = 'Room with provided key does not exist',
+  GAME_IN_PROGRESS = 'Game in the room is in progress',
+  ROOM_IS_FULL = 'Room is full',
+}
+
+export type ConnectionErrorPayload = {
+  /**
+   * Reason for failed socket connection
+   */
+  reason: ConnectionErrorReason;
+};
+
 export type GameDataReceivedPayload = {
   /**
    * Id of the participant which

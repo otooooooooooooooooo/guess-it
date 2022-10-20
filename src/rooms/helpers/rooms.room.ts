@@ -1,6 +1,8 @@
 import { v4 as uuid } from 'uuid';
 import { RoomDestroyer } from './rooms.interfaces';
 import {
+  ConnectionErrorPayload,
+  ConnectionErrorReason,
   GameDataReceivedPayload,
   GameEndedPayload,
   GameStartedPayload,
@@ -178,11 +180,25 @@ export class Room {
    * @param user
    * @returns boolean whether or not join was successful
    */
-  public join(user: WebsocketUser): boolean {
+  public join(user: WebsocketUser): void {
     this.loggingService.info('Trying to join participant', { id: user.id });
-    if (this.roomState !== RoomState.WAITING || this.isFull()) return false;
+
+    if (this.isFull()) {
+      user.emit(RoomEvent.CONNECTION_ERROR, {
+        reason: ConnectionErrorReason.ROOM_IS_FULL,
+      } as ConnectionErrorPayload);
+      user.disconnect();
+      return;
+    }
+    if (this.roomState !== RoomState.WAITING) {
+      user.emit(RoomEvent.CONNECTION_ERROR, {
+        reason: ConnectionErrorReason.GAME_IN_PROGRESS,
+      } as ConnectionErrorPayload);
+      user.disconnect();
+      return;
+    }
+
     this.addParticipant(new RoomParticipant(user));
-    return true;
   }
 
   private removeParticipant(participant: RoomParticipant) {

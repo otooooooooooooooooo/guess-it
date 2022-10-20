@@ -3,6 +3,11 @@ import { config } from '../../config/config';
 import { RoomsService } from '../service/rooms.service';
 import { WebsocketUser } from '../helpers/rooms.user';
 import { LoggingService } from '../../logging/logging.service';
+import {
+  ConnectionErrorPayload,
+  ConnectionErrorReason,
+  RoomEvent,
+} from '../helpers/rooms.events';
 
 @WebSocketGateway({ cors: config.CORS, namespace: 'rooms' })
 export class RoomsGateway implements OnGatewayConnection {
@@ -31,7 +36,10 @@ export class RoomsGateway implements OnGatewayConnection {
     });
 
     if (!key) {
-      client.disconnect('Room key not provided.');
+      client.emit(RoomEvent.CONNECTION_ERROR, {
+        reason: ConnectionErrorReason.KEY_NOT_PROVIDED,
+      } as ConnectionErrorPayload);
+      client.disconnect();
       return;
     }
 

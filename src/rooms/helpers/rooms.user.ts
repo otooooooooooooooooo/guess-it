@@ -8,8 +8,8 @@ export class WebsocketUser {
     private readonly socket: any,
   ) {}
 
-  public disconnect(message: string): void {
-    this.socket.disconnect(message);
+  public disconnect(): void {
+    this.socket.disconnect();
   }
 
   public emit(event: string, payload: any): void {
