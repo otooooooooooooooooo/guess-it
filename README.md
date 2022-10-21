@@ -59,7 +59,7 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
-### Application flow:
+### Application flow: (Frontend prototype is available on /public endpoint)
 
 * (optional) Create room with POST request on endpoint /rooms
 and receive the room key
