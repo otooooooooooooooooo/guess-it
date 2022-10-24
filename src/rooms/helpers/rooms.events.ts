@@ -108,7 +108,7 @@ export type GameDataReceivedPayload = {
    * Is false if custom words mode is not active,
    * is current custom words count otherwise
    */
-  customWords: boolean | number;
+  customWords: false | number;
   /**
    * Current online in the room
    */
