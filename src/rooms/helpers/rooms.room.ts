@@ -110,7 +110,7 @@ class RoomParticipant {
 }
 
 export class Room {
-  private readonly settings: RoomSettings = defaultSettings;
+  private readonly settings: RoomSettings = {} as RoomSettings;
   private readonly _key: RoomKey = uuid();
   private participants: RoomParticipant[] = [];
   private roomState: RoomState;
