@@ -38,12 +38,12 @@ export enum RoomEvent {
   GUESS_SUBMITTED = 'guess.submitted',
   /**
    * Is fired to everyone when a participant submits
-   * an correct guess
+   * a correct guess
    */
   PARTICIPANT_GUESSED = 'participant.guessed',
   /**
    * Is fired to everyone during a game when a new letter is
-   * revealed (Only if custom words mode is on)
+   * revealed (Only if hints are enabled)
    */
   LETTER_REVEALED = 'letter.revealed',
   /**
