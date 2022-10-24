@@ -65,7 +65,7 @@ $ npm run test:cov
 and receive the room key
 
 * Join room by opening websocket (using socket.io)
-on namespace /rooms?key=keyReceivedFromApiOrFriend?username=optionalUsername.
+on namespace /rooms?key=keyReceivedFromApiOrFriend&username=optionalUsername.
 If an error is occurred during connection, connection error
 is emitted and connection is closed from server.
 
